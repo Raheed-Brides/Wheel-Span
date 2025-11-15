@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>عجلة الحظ 🎡</title>
+  <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background: url('sds.jpg') no-repeat center center fixed;
+      background-size: cover;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-family: "Reem Kufi", sans-serif;
+      color: #3a352f;
+      margin: 0;
+      padding: 10px;
+    }
+
+    .wheel-container {
+      position: relative;
+      width: 90vw;
+      max-width: 350px;
+      height: 90vw;
+      max-height: 350px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 10px solid #3a352f;
+      box-shadow: 0 0 20px rgba(0,0,0,0.15);
+    }
+
+    /* ↓↓↓ تعديل السهم ليشير للأسفل مع نفس الموضع ↑↑↑ */
+    .pointer {
+      position: absolute;
+      bottom: -15px;
+      left: 50%;
+      transform: translateX(-50%) rotate(180deg);
+      width: 0;
+      height: 0;
+      border-left: 15px solid transparent;
+      border-right: 15px solid transparent;
+      border-top: 25px solid #3a352f;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    }
+
+    button {
+      margin-top: 60px;
+      background: #3a352f;
+      color: #fff;
+      border: none;
+      font-size: 16px;
+      padding: 10px 25px;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: 0.3s;
+      font-family: "Reem Kufi", sans-serif;
+    }
+
+    button:hover {
+      background: #2e2925;
+    }
+
+    #result {
+      margin: 15px 0;
+      font-size: 22px;
+      font-weight: bold;
+      text-align: center;
+      min-height: 30px;
+      color: #3a352f;
+    }
+
+    img {
+      width: 100%;
+      max-width: 350px;
+      height: auto;
+      margin-bottom: 15px;
+      border-radius: 10px;
+    }
+
+    @media (max-width: 400px) {
+      #result { font-size: 18px; }
+      button { font-size: 15px; padding: 9px 22px; }
+    }
+  </style>
+</head>
+<body>
+  <img src="IMG_0851.PNG" alt="">
+  <div id="result"></div>
+
+  <div class="wheel-container">
+    <canvas id="wheel" width="400" height="400"></canvas>
+    <div class="pointer"></div>
+  </div>
+
+  <button id="spin">ابدأ</button>
+
+  <script>
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    const resultDiv = document.getElementById("result");
+
+    const segments = [
+      "أكسسوارات شعر مجاناً",
+      "هديتك علينا",
+      "خصم ١٠٪",
+      "حظ أوفر المرة القادمة",
+      "قسيمة خصم لشخص من اختيارك",
+      "هديتك علينا",
+      "خصم ٥٪"
+    ];
+
+    const colors = [
+      "#e9e5dc", "#ffffff", "#dcd7cf", "#ffffff",
+      "#cfc9bc", "#ffffff", "#d6d2c6"
+    ];
+
+    const segCount = segments.length;
+    const arc = (2 * Math.PI) / segCount;
+    let angle = 0, spinAngle = 0, spinTime = 0, spinTimeTotal = 0, isSpinning = false;
+
+    function drawWheel() {
+      const radius = canvas.width / 2;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < segCount; i++) {
+        const startAngle = i * arc;
+        ctx.beginPath();
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.moveTo(radius, radius);
+        ctx.arc(radius, radius, radius - 5, startAngle, startAngle + arc);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(radius, radius);
+        ctx.rotate(startAngle + arc / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#3a352f";
+        ctx.font = "bold 18px 'Reem Kufi', sans-serif";
+        const text = segments[i];
+        const textRadius = radius - 25;
+
+        if (text.length > 15) {
+          const words = text.split(' ');
+          const mid = Math.ceil(words.length / 2);
+          const line1 = words.slice(0, mid).join(' ');
+          const line2 = words.slice(mid).join(' ');
+          ctx.fillText(line1, textRadius, -5);
+          ctx.fillText(line2, textRadius, 15);
+        } else {
+          ctx.fillText(text, textRadius, 5);
+        }
+        ctx.restore();
+      }
+    }
+
+    function rotateWheel() {
+      spinTime += 20;
+      if (spinTime >= spinTimeTotal) {
+        stopRotateWheel();
+        return;
+      }
+      const easeOut = (t, b, c, d) => c * (1 - Math.pow(1 - t / d, 3)) + b;
+      const deg = easeOut(spinTime, 0, spinAngle, spinTimeTotal);
+      angle = deg * Math.PI / 180;
+      drawRotated(angle);
+      requestAnimationFrame(rotateWheel);
+    }
+
+    function drawRotated(rot) {
+      const r = canvas.width / 2;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(r, r);
+      ctx.rotate(rot);
+      ctx.translate(-r, -r);
+      drawWheel();
+      ctx.restore();
+    }
+
+    function stopRotateWheel() {
+      isSpinning = false;
+      const degrees = (angle * 180 / Math.PI) + 270; // السهم لتحت
+      const arcd = 360 / segCount;
+      const index = Math.floor((360 - (degrees % 360)) / arcd) % segCount;
+      resultDiv.textContent = "النتيجة: " + segments[index];
+      resultDiv.style.transition = "transform 0.3s ease";
+      resultDiv.style.transform = "scale(1.2)";
+      setTimeout(() => resultDiv.style.transform = "scale(1)", 300);
+    }
+
+    document.getElementById("spin").addEventListener("click", () => {
+      if (isSpinning) return;
+      isSpinning = true;
+      resultDiv.textContent = "";
+      spinAngle = Math.random() * 3600 + 2000;
+      spinTime = 0;
+      spinTimeTotal = 4000 + Math.random() * 2000;
+      rotateWheel();
+    });
+
+    drawWheel();
+  </script>
+</body>
+</html>

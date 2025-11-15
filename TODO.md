@@ -1,0 +1,2 @@
+- [x] Update body background to use 27.jpg
+- [x] Increase size of IMG_0851.PNG image
